@@ -1,0 +1,72 @@
+---
+title: "Manipulating Data using dplyr"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+    df_print: paged
+runtime: shiny_prerendered
+description: >
+  Learn to manipulate data with the package dplyr.
+---
+
+
+## Overview
+
+In this session, we will learn how to manipulate data and in particular, to select/modify/create columns, filter/order rows and calculate summaries. Knowing how to manipulate data is an essential skill that anyone working with data needs to acquire. We will focus on using the package `dplyr`, which is part of tidyverse, like ggplot2, and is probably the most commonly used package when it comes to this sort of data manipulation. I'm saying this *sort of data manipulation*, because we are not going to talk about more advanced manipulations like merging datasets or going from wide to long format. We will discuss these later, during the last session of the course.
+
+This session is split into two parts, and you'll have a series of exercises and questions along the way and at the end.
+
+1. In the first part - this workbook - we will mainly focus on learning how to use 5 of the 6 core functions of the package dplyr. These functions will help you perform all the data manipulations mentioned in the first sentence, that is:
+    + select columns - with `select()`
+    + filter rows - with `filter()`
+    + reorder rows - with `arrange()`
+    + make summaries - with `summarise()`
+    + create/modify columns - with `mutate()`
+
+2. In the second part, we will learn how to efficiently combine all these functions and a couple of new ones, to perform all the complex sequences of manipulations that you will need in your work. In particular, we will learn to
+    + perform a sequence of manipulation
+    + use the function `group_by()`
+    + use the pipe operator `%>%`
+
+
+Let's start with a video where I give you more information about data manipulation, the package dplyr and its core functions.
+
+![](https://youtu.be/koj23uKL45I)
+
+### loading dplyr
+
+Like ggplot, dplyr is an additional package that needs to be installed and then loaded. We haven't learnt how to properly do that yet, but in this workbook, dplyr is already pre-loaded, so we're good to go and learn about the core functions of dplyr!
+
+
+```{r setup, include=FALSE}
+library(learnr)
+library(dplyr)
+tutorial_options(exercise.timelimit = 10)
+options(max.print=50)
+```
+
+
+## filter()
+
+When you want to retrieve specific rows rather than columns, you use the function `filter()`. The way it works is similar to `select()`: we write the data first, and then we indicate the rows that we want to retrieve. Except that our rows don't have names, so we use conditions on some of our columns instead. In the command below, the expression `year>2019` tells R that we want all the rows for which the column year has a value greater than 2019 - this is equivalent to asking for all movies released in 2020 (or later)
+
+```{r filter_1, exercise = TRUE}
+
+```
+
+
+
+## Appendix: Useful reference links  
+
+
+The official dplyr documentation: <a href="https://dplyr.tidyverse.org/" target="_blank">https://dplyr.tidyverse.org/</a> 
+
+dplyr CheatSheet:<a href="https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf" target="_blank">https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf   </a>  
+
+Data Manipulation Tools - Rstudio video:
+<a href="https://www.youtube.com/watch?v=Zc_ufg4uW4U" target="_blank">dplyr -- Pt 3 Intro to the Grammar of Data Manipulation with R   </a> 
+
+Some documentation on subsetting r-objects using base-R: <a href="https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html" target="_blank">https://bookdown.org/rdpeng/rprogdatascience/subsetting-r-objects.html </a> 
+
+
