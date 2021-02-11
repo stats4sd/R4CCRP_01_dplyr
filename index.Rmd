@@ -25,18 +25,15 @@ This session is split into two parts, and you'll have a series of exercises and 
     + create/modify columns - with `mutate()`
 
 2. In the second part, we will learn how to efficiently combine all these functions and a couple of new ones, to perform all the complex sequences of manipulations that you will need in your work. In particular, we will learn to
-    + perform a sequence of manipulation
-    + use the function `group_by()`
-    + use the pipe operator `%>%`
+    + perform a sequence of manipulation by saving and reusing the output of functions
+    + use the function `group_by()` which will allow manipulations like summaries or filters by groups of observations
+    + use the pipe `%>%`, an operator similar to the `+` in ggplot, that makes it very easy to perform cascades of manipulations on a data frame
 
 
 Let's start with a video where I give you more information about data manipulation, the package dplyr and its core functions.
 
 ![](https://youtu.be/koj23uKL45I)
 
-### loading dplyr
-
-Like ggplot, dplyr is an additional package that needs to be installed and then loaded. We haven't learnt how to properly do that yet, but in this workbook dplyr is already pre-loaded, so we're good to go and learn about the core functions of dplyr! We will do so using the dataset `BeanSurvey` that you already explored in the previous workbook. Have a look at the appendix if you need to remind yourself about it.
 
 
 ```{r setup, include=FALSE}
@@ -47,6 +44,21 @@ tutorial_options(exercise.timelimit = 10)
 options(max.print=50)
 BeanSurvey<-readRDS("bean_survey.RDS")
 ```
+
+
+### loading dplyr
+
+Like ggplot, dplyr is an additional package that needs to be installed and then loaded. We haven't learnt how to properly do that yet, but in this workbook dplyr is already pre-loaded, so we're good to go and learn about the core functions of dplyr!
+
+### the dataset
+
+We will do so using a slightly modified version of the dataset `BeanSurvey` that you already explored in the previous workbook. It is already loaded and so you may remember that you can have a quick look at it by simply typing its name:
+```{r dataset, exercise = TRUE}
+BeanSurvey
+```
+Have a look at the appendix if you want to have a better look at it and remind yourself of the meaning of each variable.
+
+
 
 
 
@@ -234,13 +246,15 @@ As you see, we didn't get one single result here. That's because filter retrieve
 
 
 
-**Question: write the command that would show the households whose land area is the smallest**
+**Question: write the command that would show the household that has the highest quantity of beans planted in long rain season. Hint: there is a missing value in the column**
 ```{r filter_13, exercise=TRUE}
 
 ```
 
 ```{r filter_13-solution}
-filter(BeanSurvey, LANDAREA==min(LANDAREA))
+filter(BeanSurvey, BEANSPLANTED_LR==max(BEANSPLANTED_LR, na.rm=TRUE))
+# if we omit the argument 'na.rm=TRUE' in the function max(), we end up with no household.
+# that's because the missing value makes max(BEANSPLANTED_LR) be unknown/missing as well.
 ```
 
 
@@ -274,7 +288,7 @@ As this section is a bit shorter than the other ones, let me briefly introduce y
 ```{r arrange_slice, exercise = TRUE}
 slice(BeanSurvey, 1:5)
 ```
-`slice()` is often useful after `arrange()`, to retrieve the few rows that have the highest or lowest values for the column used to order the rows.
+`slice()` is often useful after `arrange()`, to retrieve the few rows that have the highest or lowest values for the column used to order the rows. Combining manipulations like that is what we'll learn in the second part of the workbook. Stay tuned! 
 
 
 
@@ -290,7 +304,7 @@ arrange(BeanSurvey, desc(ADULTS))
 
 ## summarise()
 
-The next function we will learn about is `summarise()`, which calculates summaries of variables within our dataset. As with all the other dplyr functions, the first argument is the name of our data. The second argument provides a summary calculation.
+The next function we will learn about is `summarise()`, which calculates summaries of variables within our dataset. As with all the other dplyr functions, the first argument is the name of our data. The second argument provides a summary function used on a variable from the data.
 
 
 For example, to know the total area of all the household farms in the BeanSurvey data frame, we can use the summary function `sum()`:
@@ -303,7 +317,7 @@ This seems equivalent to doing:
 sum(BeanSurvey$LANDAREA)
 ```
 
-Except that with summarise, the output is a data frame, which is extremely useful if we want to use our summaries later, or combine our command with other manipulations. We should also get used to give a proper name to the output column containing our summary statistics to make it easy to reuse it in later steps. To do so, we place the name we would like for our summary followed by a single equals sign just in front of our calculation.
+Except that with `summarise()`, the output is a data frame, which is extremely useful if we want to use our summaries later, or combine our command with other manipulations. We should also get used to give a proper name to the output column containing our summary statistics to make it easy to reuse it in later steps. To do so, we place the name we would like for our summary followed by a single equals sign just in front of our calculation.
 ```{r summarize_2, exercise = TRUE}
 summarise(BeanSurvey, totalArea=sum(LANDAREA))
 ```
@@ -319,7 +333,7 @@ We can ask R to give us more than one summary, by listing the calculations we wa
 ```{r summarize_3, exercise = TRUE}
 summarise(BeanSurvey, households=n(), mean_area=mean(LANDAREA), sd_area=sd(LANDAREA))
 ```
-Here we used the functions `mean()` and `sd()` to calculate the mean, and standard deviation of the column LANDAREA. We also used the function `n()`, which simply counts the number of rows - that is, here, the number of households.
+Here we used the functions `mean()` and `sd()` to calculate the mean, and standard deviation of the column LANDAREA. We also used the function `n()`, which simply counts the number of rows - that is, here, the number of households. Note that with `n()` we don’t put a name of variable inside the brackets, since the number of rows does not depend on the variables.
 
 So far, we've only used numeric variables in our calculations, but we can also use factors or categorical variables. For example, it is often useful to count the number of occurrences of a certain value using conditions, a bit like we did in the `filter` section. Let's try to count the number of female headed and male headed households:
 
@@ -327,15 +341,28 @@ So far, we've only used numeric variables in our calculations, but we can also u
 summarise(BeanSurvey, female_HH=sum(GENDERHH=="female"), male_HH= sum(GENDERHH=="male"))
 ```
 
-Argh, we obtain the value 'NA'! That's because there is a missing value in this column. Have a look at the 17th row of the dataset:
-```{r summarize_5, exercise = TRUE}
-slice(BeanSurvey, 17)
-```
+Argh, we obtain the value 'NA'! We've discussed the issue of R not being able to calculate some summary statistics like a mean, sum or maximum when there's a missing data in the variable, unless we add the argument `na.rm=TRUE`. We've not discussed how to check the presence of missing values in the first place though. One good way to do that would be to use `filter()` together with the base-R function `is.na()`.
 
-But we can tell R to skip the missing values, by using the argument `na.rm=TRUE` within the `sum()` function:
+Let's see what `is.na()` does when we apply it to our gender variable:
+```{r summarize_4b, exercise = TRUE}
+is.na(BeanSurvey$GENDERHH)
+```
+It gives us a vector that take the value TRUE when GENDERHH is missing and false otherwise.
+
+
+We can then use it inside `filter()` to keep only the rows where `is.na(GENDERHH)` is equal to `TRUE`:
+```{r summarize_4c, exercise = TRUE}
+filter(BeanSurvey, is.na(GENDERHH)==TRUE)
+```
+Here we go, this household in Kimbugu was the one where the gender of the head of household was missing!
+Note that we didn't place any quote around TRUE, which may be confusing for some of you, as we told you a few times that you should always have quote around strings of text that are not existing objects or variables within R. Well that's because within R, TRUE and FALSE are recognized as values rather than strings of text. Don't worry, we'll talk more about it a bit later.
+
+
+So now that we confirmed that there is a missing value in the variable GENDERHH, we can tell R to skip it using the argument `na.rm=TRUE` within the `sum()` function:
 ```{r summarize_6, exercise = TRUE}
 summarise(BeanSurvey, female_HH=sum(GENDERHH=="female", na.rm=TRUE), male_HH= sum(GENDERHH=="male", na.rm=TRUE))
 ```
+We have our summaries!
 
 **Question: Use summarise to calculate the number of households growing beans, maize and coffee. Give sensible names to these numbers**
 ```{r summarize_7, exercise = TRUE}
@@ -348,7 +375,7 @@ summarise(BeanSurvey, grow_beans = sum(BEANS=="Yes"), grow_maize = sum(MAIZE=="Y
 
 ```
 
-`summarise()` is especially useful when it is used in combination with the function `group_by()` that we will see in a moment. 
+`summarise()` is especially useful when it is used in combination with the function `group_by()`, as the latter allow us to calculate summaries for ***groups*** of observations rather than for the whole dataset. We will learn how to do that a bit later in the second part of this workbook. 
 
 
 ## mutate()
@@ -370,7 +397,7 @@ Similarly to `summarise()`, you can use functions like `sum()`, `min()`, `max()`
 ```{r mutate_2, exercise = TRUE}
 mutate(BeanSurvey, has_children = CHILDREN > 0)
 ```
-In the command above, when the column CHILDREN is greater than 0, the expression `CHILDREN > 0` returns `TRUE`. Otherwise, it returns `FALSE`. If you look just below the name of our new variable (click the black arrow to get to the right end of the dataset), you will see a set of weird grey characters. It indicates the type of the variable. Here the set of characters is `<lgl>` and "lgl" is a shorthand for 'logical'. That's because we just created a variable of type 'logical'. The only values that a logical variable can take are 'TRUE' and 'FALSE', which are special values used by R to determine if a condition is true or false.
+In the command above, when the column CHILDREN is greater than 0, the expression `CHILDREN > 0` returns `TRUE`. Otherwise, it returns `FALSE`. If you look just below the name of our new variable (click the black arrow to get to the right end of the dataset), you will see a set of weird grey characters. It indicates the type of the variable. Here the set of characters is `<lgl>` and "lgl" is a shorthand for 'logical'. That's because we just created a variable of type 'logical'. The only values that a logical variable can take are 'TRUE' and 'FALSE', which are special values used by R to determine if a condition is true or false. We had already created a logical variable a few commands ago when we checked if there was any missing value in the variable GENDERHH using `is.na(GENDERHH)`, though we did not save it. With mutate, we keep it in our dataset!
 
 Note that you have a similar set of grey characters below every column name, and `<chr>`, `<int>`, `<dbl>` indicate that the corresponding variables are of type 'character', 'integer' and 'double' respectively, the two latter being different types of numeric variables. The operations and functions that you can apply to a variable depends on their type, so this information is very useful, especially to understand why you get errors or things don't go as expected. For example, whenever you try to make a calculation with a character variable, R will give you an error.
 
@@ -416,18 +443,18 @@ mutate(BeanSurvey, CHILDREN = CHILDREN > 0)
 You need to be careful when modifying existing columns though. In general, as it's not too much of a pain to have lots of columns - since we have the function `select()` to pick the ones we want - we often prefer to create new columns rather than modifying existing ones.
 
 
-**Question: create a column that measures the total yield of beans per acre of each household. Give it a sensible name**
+**Question: create a column that measures the yield of beans per acre of each household in long rain season. Give it a sensible name**
 
 ```{r mutate_5, exercise = TRUE}
 
 ```
 
 ```{r mutate_5-solution}
-mutate(BeanSurvey, yield_per_acre = (BEANSHARVESTED_LR + BEANSHARVESTED_SR)/LANDAREA)
+mutate(BeanSurvey, yield_per_acre_LR = BEANSHARVESTED_LR/LANDAREA)
 
 ```
 
-This new column will be extremely useful for analysing our dataset, but we still don't know to associate the result of our manipulations with each other and other operations. Time for the second part of the dplyr session!
+Such new column will be useful for analysing our dataset, but we still don't know how to associate the result of our manipulations with each other and other operations. Time for the second part of the dplyr session!
 
 ## Appendix: 'BeanSurvey' dataset 
 
