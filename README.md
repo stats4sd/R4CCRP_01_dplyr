@@ -5,7 +5,7 @@ This repository contains materials for _Manipulating Data Using dplyr (Part 1)_ 
 https://shiny.stats4sd.org/R4CCRP_01_dplyr
 
 # Development
-This R project (R version ...) uses the learnr package to create an interactive workbook.
+This R project (R version 4.2.1) uses the learnr package to create an interactive workbook.
 
 ## Setup Local Environment
 1.	Clone repo: `git@github.com:stats4sd/R4CCRP_01_dplyr.git`
